@@ -90,6 +90,18 @@ where
         self
     }
 
+    /// Append a new SQL line to the query.
+    ///
+    /// Please read the [`.push_bind()`][Self::push] documentation first!
+    /// This function simply prefixes the fragment with a newline, before pushing it.
+    pub fn push_line(&mut self, sql: impl Display) -> &mut Self {
+        self.sanity_check();
+
+        write!(self.query, "\n{}", sql).expect("error formatting `sql`");
+
+        self
+    }
+
     /// Push a bind argument placeholder (`?` or `$N` for Postgres) and bind a value to it.
     ///
     /// ### Note: Database-specific Limits
@@ -387,6 +399,18 @@ mod test {
         assert_eq!(
             qb.query,
             "SELECT * FROM users WHERE last_name LIKE '[A-N]%;".to_string(),
+        );
+    }
+
+    #[test]
+    fn test_push_line() {
+        let mut qb: QueryBuilder<'_, Postgres> = QueryBuilder::new("SELECT * FROM users");
+        let second_line = "WHERE last_name LIKE '[A-N]%;";
+        qb.push_line(second_line);
+
+        assert_eq!(
+            qb.query,
+            "SELECT * FROM users\nWHERE last_name LIKE '[A-N]%;".to_string(),
         );
     }
 
